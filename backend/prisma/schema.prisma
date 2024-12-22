@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cohort {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  students   Student[]
+
+  @@map("cohorts")
+}
+
+model Course {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  createdAt       DateTime         @default(now()) @map("created_at")
+  studentCourses  StudentCourse[]
+
+  @@map("courses")
+}
+
+model Student {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  cohortId        String          @map("cohort_id") @db.Uuid
+  dateJoined      DateTime        @default(now()) @map("date_joined")
+  lastLogin       DateTime        @default(now()) @map("last_login")
+  status          Boolean         @default(true)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  cohort          Cohort          @relation(fields: [cohortId], references: [id])
+  studentCourses  StudentCourse[]
+
+  @@map("students")
+}
+
+model StudentCourse {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId  String   @map("student_id") @db.Uuid
+  courseId   String   @map("course_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@map("student_courses")
+}
